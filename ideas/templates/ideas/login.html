@@ -1,0 +1,6 @@
+{% extends 'ideas/base.html' %}
+{% block title %}Sign in — AnoRank{% endblock %}
+{% block content %}
+<section class="page-heading auth-heading"><p class="eyebrow">Your voice counts</p><h1>Welcome back<span class="accent">.</span></h1><p>Sign in to cast your vote or enter an award round. Your username stays out of public idea pages.</p></section>
+<form method="post" class="idea-form panel auth-form" novalidate>{% csrf_token %}<input type="hidden" name="next" value="{{ next }}">{% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}{% for field in form %}<div class="form-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="field-errors" role="alert">{{ field.errors }}</div>{% endif %}</div>{% endfor %}<div class="form-actions"><button class="button button-primary button-full" type="submit">Sign in →</button></div><p class="auth-switch">New here? <a href="{% url 'signup' %}">Create an account</a></p></form>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends 'ideas/base.html' %}
+{% block title %}Create an account — AnoRank{% endblock %}
+{% block content %}
+<section class="page-heading auth-heading"><p class="eyebrow">A say in what happens next</p><h1>Join the conversation<span class="accent">.</span></h1><p>Create an account to enter award rounds and vote. Anyone can join; no BIC membership approval is needed.</p></section>
+<form method="post" class="idea-form panel auth-form" novalidate>{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}{% for field in form %}<div class="form-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="field-help auth-help">{{ field.help_text|safe }}</div>{% endif %}{% if field.errors %}<div class="field-errors" role="alert">{{ field.errors }}</div>{% endif %}</div>{% endfor %}<div class="form-actions"><p>Your account and email are private. They let organisers identify and contact you if your entry wins.</p><button class="button button-primary" type="submit">Create account →</button></div><p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign in</a></p></form>
+{% endblock %}

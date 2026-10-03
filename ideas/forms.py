@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
 from .models import Idea, Rating
 
 
@@ -32,3 +34,23 @@ class RatingForm(forms.ModelForm):
         model = Rating
         fields = ["feasibility", "impact", "originality"]
         widgets = {name: forms.RadioSelect(choices=[(n, str(n)) for n in range(1, 6)]) for name in fields}
+
+
+class CommunitySignupForm(UserCreationForm):
+    email = forms.EmailField(label="Email", help_text="Used privately by organisers to contact an award winner.")
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email")
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        if get_user_model().objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if get_user_model().objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account already uses this email. Sign in to that account.")
+        return email

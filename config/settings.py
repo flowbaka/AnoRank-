@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,22 +24,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 _local_env = BASE_DIR / ".env"
-_local_secret = None
 if _local_env.is_file():
     for _line in _local_env.read_text(encoding="utf-8").splitlines():
         _name, _separator, _value = _line.partition("=")
-        if _separator and _name.strip() == "DJANGO_SECRET_KEY":
-            _local_secret = _value.strip().strip('"').strip("'")
-            break
+        if _separator and _name.strip().isidentifier():
+            os.environ.setdefault(_name.strip(), _value.strip().strip('"').strip("'"))
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or _local_secret
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError("Set DJANGO_SECRET_KEY or add it to .env")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # Application definition
@@ -85,12 +88,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    _database = urlparse(_database_url)
+    if _database.scheme not in ("postgres", "postgresql") or not _database.hostname or not _database.path.strip("/"):
+        raise ImproperlyConfigured("DATABASE_URL must identify a PostgreSQL database.")
+    DATABASES = {"default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(_database.path.lstrip("/")),
+        "USER": unquote(_database.username or ""),
+        "PASSWORD": unquote(_database.password or ""),
+        "HOST": _database.hostname,
+        "PORT": _database.port or 5432,
+        "OPTIONS": {"sslmode": parse_qs(_database.query).get("sslmode", ["require"])[0]},
+    }}
+else:
+    DATABASES = {"default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.environ.get("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
+    }}
 
 
 # Password validation
@@ -117,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'
 
 USE_I18N = True
 
@@ -133,3 +149,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "awards"
+LOGOUT_REDIRECT_URL = "home"

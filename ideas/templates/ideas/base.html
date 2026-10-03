@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A space for ideas, not identities. Share an idea and evaluate its feasibility, impact, and originality.">
+  <meta name="description" content="Built from the BIC community: share ideas, vote in community award rounds, and let the most-supported idea win.">
   <meta name="theme-color" content="#176b5b">
   <title>{% block title %}AnoRank — Ideas over identities{% endblock %}</title>
   <link rel="icon" href="{% static 'ideas/favicon.svg' %}" type="image/svg+xml">
@@ -18,11 +18,13 @@
       <a class="brand" href="{% url 'home' %}" aria-label="AnoRank home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Ano<span class="brand-light">Rank</span><span class="brand-dot">.</span></a>
       <nav aria-label="Main navigation">
         <a href="{% url 'home' %}" {% if mode == 'discover' %}aria-current="page"{% endif %}>Discover</a>
+        <a href="{% url 'awards' %}" {% if mode == 'awards' %}aria-current="page"{% endif %}>BIC awards</a>
         <a href="{% url 'leaderboard' %}" {% if mode == 'leaderboard' %}aria-current="page"{% endif %}>Leaderboard</a>
         <a href="{% url 'saved' %}" {% if mode == 'saved' %}aria-current="page"{% endif %}>Saved</a>
         <a class="nav-about" href="{% url 'about' %}" {% if mode == 'about' %}aria-current="page"{% endif %}>How it works</a>
       </nav>
       <a class="button button-primary header-submit" href="{% url 'submit_idea' %}"><span aria-hidden="true">+</span> Share an idea</a>
+      <a class="auth-link" href="{% if user.is_authenticated %}{% url 'account' %}{% else %}{% url 'login' %}{% endif %}">{% if user.is_authenticated %}My account{% else %}Sign in{% endif %}</a>
     </div>
   </header>
   <main id="main" class="shell">
