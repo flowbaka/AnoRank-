@@ -1,0 +1,11 @@
+{% extends 'ideas/base.html' %}
+{% block title %}Share an idea — AnoRank{% endblock %}
+{% block content %}
+<section class="page-heading narrow"><p class="eyebrow">A little courage goes a long way</p><h1>Your idea starts here<span class="accent">.</span></h1><p>You don’t need all the answers. A clear idea and a fresh perspective are a good start.</p></section>
+<div class="form-layout"><form method="post" class="idea-form panel" novalidate>{% csrf_token %}
+  <div class="form-topline"><span class="privacy-mark" aria-hidden="true">◇</span><div><strong>Shared anonymously</strong><p>Your name isn’t collected or displayed.</p></div></div>
+  {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+  {% for field in form %}<div class="form-field"><label for="{{ field.id_for_label }}">{{ field.label }} <span class="required-text">Required</span></label>{{ field }}{% if field.errors %}<div class="field-errors" role="alert">{{ field.errors }}</div>{% endif %}{% if field.name == 'title' %}<div class="field-help"><span>Keep it clear and specific.</span><span data-character-count="id_title">0 / 255</span></div>{% elif field.name == 'description' %}<p class="field-help">At least 30 characters. Explain the problem, your approach, and why it matters.</p>{% endif %}</div>{% endfor %}
+  <div class="form-actions"><p>By sharing, your idea becomes visible to everyone.<br>Avoid including personal or confidential information.</p><button class="button button-primary" type="submit">Publish idea ↗</button></div>
+</form><aside class="writing-guide"><p class="eyebrow">A little guidance</p><h2>Good ideas<br>are easy to follow.</h2><div class="guide-item"><span>01</span><div><h3>Start with a problem</h3><p>What feels broken, missing, or harder than it needs to be?</p></div></div><div class="guide-item"><span>02</span><div><h3>Make it concrete</h3><p>Describe how your idea could work, even if it’s a first draft.</p></div></div><div class="guide-item"><span>03</span><div><h3>Show the possibility</h3><p>Who benefits? What changes for them?</p></div></div><blockquote>“What if…” is a perfectly good place to begin.</blockquote></aside></div>
+{% endblock %}

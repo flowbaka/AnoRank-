@@ -1,17 +1,31 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AnoRank</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-</head>
-<body class="bg-light">
-    <main class="container py-5">
-        <h1>AnoRank</h1>
-        <p class="lead">Good ideas deserve to be heard, whoever suggests them.</p>
-        <p>Submit ideas anonymously and evaluate them on feasibility, impact, and originality.</p>
-    </main>
-</body>
-</html>
+{% extends 'ideas/base.html' %}
+{% block title %}{% if mode == 'leaderboard' %}Leaderboard{% elif mode == 'saved' %}Saved ideas{% else %}Discover ideas{% endif %} — AnoRank{% endblock %}
+{% block content %}
+{% if mode == 'discover' %}
+<section class="hero">
+  <div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span> A space for ideas, not identities</p><h1>Big possibilities.<br>Zero name tags<span class="accent">.</span></h1><p class="hero-description">A better way to share what’s on your mind.<br class="desktop-break"> Put your idea out there. Let its potential do the talking.</p><div class="hero-actions"><a class="button button-primary" href="{% url 'submit_idea' %}">Share your idea <span aria-hidden="true">↗</span></a><a class="text-link" href="{% url 'about' %}">How it works <span aria-hidden="true">→</span></a></div><p class="hero-footnote">No sign-up. No names. Just a fresh perspective.</p></div>
+  <div class="hero-art" aria-label="Ideas are evaluated on feasibility, impact, and originality"><div class="art-caption"><span class="mini-mark">↗</span><span>Potential, from every angle.</span></div><div class="art-paper"><span class="eyebrow">The AnoRank approach</span><h2>Let the idea<br>stand on its own.</h2><div class="art-criterion"><span>01</span><strong>Feasibility</strong><div class="art-line line-one"></div></div><div class="art-criterion"><span>02</span><strong>Impact</strong><div class="art-line line-two"></div></div><div class="art-criterion"><span>03</span><strong>Originality</strong><div class="art-line line-three"></div></div><div class="art-bottom"><span>Three perspectives.</span><strong>One fair score.</strong></div></div><span class="art-tag">A little idea. A lot of possibility.</span></div>
+</section>
+{% else %}
+<section class="page-heading"><p class="eyebrow">{% if mode == 'saved' %}Your quiet collection{% else %}Community perspectives{% endif %}</p><h1>{% if mode == 'saved' %}Worth another look<span class="accent">.</span>{% else %}Ideas rising to the top<span class="accent">.</span>{% endif %}</h1><p>{% if mode == 'saved' %}Keep the ideas that make you think. Saved in this browser.{% else %}Ranked by the average of feasibility, impact, and originality. Every rating counts equally.{% endif %}</p></section>
+{% endif %}
+<section class="board" aria-labelledby="board-title">
+  <div class="board-heading"><div><p class="eyebrow">{% if mode == 'leaderboard' %}The leaderboard{% elif mode == 'saved' %}Your saved ideas{% else %}The idea board{% endif %}</p><h2 id="board-title">{% if mode == 'leaderboard' %}Good thinking, recognised.{% elif mode == 'saved' %}A collection of possibilities.{% else %}What could we make better?{% endif %}</h2></div>{% if mode == 'discover' %}<div class="board-stats"><span><strong>{{ total_ideas }}</strong> ideas shared</span><span><strong>{{ total_ratings }}</strong> thoughtful ratings</span></div>{% endif %}</div>
+  <form class="search-bar" method="get" role="search"><div class="search-input"><span aria-hidden="true">⌕</span><label class="sr-only" for="idea-search">Search ideas</label><input id="idea-search" type="search" name="q" value="{{ q }}" placeholder="Find an idea that speaks to you…" maxlength="200"><button class="button button-small" type="submit">Search</button></div><div class="sort-field"><label for="idea-sort">Sort by</label><select id="idea-sort" name="sort"><option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest ideas</option><option value="top" {% if sort == 'top' %}selected{% endif %}>Highest rated</option><option value="discussed" {% if sort == 'discussed' %}selected{% endif %}>Most rated</option></select></div><input type="hidden" name="category" value="{{ category }}"></form>
+  <nav class="category-tabs" aria-label="Filter ideas by category"><a href="?q={{ q|urlencode }}&sort={{ sort }}" {% if not category %}aria-current="true"{% endif %}>All ideas</a>{% for value,label in categories %}<a href="?category={{ value }}&q={{ q|urlencode }}&sort={{ sort }}" {% if category == value %}aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}</nav>
+  {% if q %}<p class="search-result">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }} for “{{ q }}” <a href="?sort={{ sort }}&category={{ category }}">Clear search ×</a></p>{% endif %}
+  <div class="board-layout"><div class="idea-list">
+  {% for idea in page_obj %}
+    <article class="idea-row">
+      {% if mode == 'leaderboard' %}<span class="rank-number">{{ page_obj.start_index|add:forloop.counter0|stringformat:'02d' }}</span>{% endif %}
+      <div class="idea-row-main"><div class="idea-meta"><span class="category-label">{{ idea.get_category_display }}</span><span>Shared anonymously · {{ idea.created_at|date:'M j' }}</span></div><h3><a href="{% url 'idea_detail' idea.public_id %}">{{ idea.title }}</a></h3><p>{{ idea.description|truncatechars:155 }}</p><div class="idea-row-bottom"><span>{{ idea.rating_count }} rating{{ idea.rating_count|pluralize }}</span><a href="{% url 'idea_detail' idea.public_id %}">Explore idea <span aria-hidden="true">↗</span></a>{% if mode == 'saved' %}<form method="post" action="{% url 'toggle_save' idea.public_id %}">{% csrf_token %}<input type="hidden" name="return_to" value="saved"><button class="plain-button" type="submit">Remove</button></form>{% endif %}</div></div>
+      <div class="idea-score {% if not idea.rating_count %}unrated{% endif %}">{% if idea.rating_count %}<strong>{{ idea.score|floatformat:1 }}</strong><span>out of 5</span>{% else %}<strong>—</strong><span>Be the first</span>{% endif %}</div>
+    </article>
+  {% empty %}
+    <div class="empty-state"><span class="empty-symbol" aria-hidden="true">{% if mode == 'saved' %}◇{% elif q or category %}⌕{% else %}↗{% endif %}</span><h3>{% if mode == 'saved' %}Make room for a good idea.{% elif q or category %}No ideas here just yet.{% elif mode == 'leaderboard' %}The next great idea needs a first rating.{% else %}Every great board starts with one idea.{% endif %}</h3><p>{% if mode == 'saved' %}Open an idea and select “Save idea” to keep it here.{% elif q or category %}Try another search or explore all categories.{% elif mode == 'leaderboard' %}Explore the idea board and help an idea find its place.{% else %}A small improvement. A bold possibility. What’s on your mind?{% endif %}</p>{% if q or category or mode != 'discover' %}<a class="button" href="{% url 'home' %}">Explore all ideas →</a>{% else %}<a class="button button-primary" href="{% url 'submit_idea' %}">Share the first idea ↗</a>{% endif %}</div>
+  {% endfor %}
+  {% if page_obj.has_other_pages %}<nav class="pagination" aria-label="Idea pages">{% if page_obj.has_previous %}<a class="button button-small" href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="button button-small" href="?{{ querystring }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
+  </div><aside class="board-aside"><div class="aside-symbol" aria-hidden="true">✳</div><h3>Evaluate the idea.<br>Leave the identity.</h3><p>Different perspectives make better possibilities. Rate each idea on three things:</p><ol class="criteria-list"><li><strong>Feasibility</strong><span>Could it actually work?</span></li><li><strong>Impact</strong><span>Would it make a difference?</span></li><li><strong>Originality</strong><span>Is there a fresh angle?</span></li></ol><a class="text-link" href="{% url 'about' %}">A closer look at scoring →</a><div class="aside-note">The score is an average, not a verdict. A new idea deserves a chance, too.</div></aside></div>
+</section>
+<section class="bottom-callout"><div><p class="eyebrow">That “what if” you’ve been thinking about?</p><h2>Give it a place to start.</h2></div><a class="button button-primary" href="{% url 'submit_idea' %}">Share an idea ↗</a></section>
+{% endblock %}
